@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "id_torneo": 1,
+    "equipo_local": 1,
+    "equipo_visitante": 2,
+    "goles_local": 0,
+    "goles_visitante": 0,
+    "fecha": "10-02-2020",
+    "estado": "Finalizado"
+  }
+]

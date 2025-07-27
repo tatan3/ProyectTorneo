@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "nombre": "Tatan",
+    "fundacion": 2020,
+    "estadio": "Terreno",
+    "jugadores": [],
+    "cuerpo_tecnico": []
+  },
+  {
+    "id": 2,
+    "nombre": "Jhona",
+    "fundacion": 2020,
+    "estadio": "frefre2",
+    "jugadores": [],
+    "cuerpo_tecnico": []
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "id_torneo": 1,
+    "id_equipo": 1,
+    "pj": 1,
+    "pg": 0,
+    "pe": 1,
+    "pp": 0,
+    "gf": 0,
+    "gc": 0,
+    "dg": 0,
+    "puntos": 1
+  },
+  {
+    "id": 1,
+    "id_torneo": 1,
+    "id_equipo": 2,
+    "pj": 1,
+    "pg": 0,
+    "pe": 1,
+    "pp": 0,
+    "gf": 0,
+    "gc": 0,
+    "dg": 0,
+    "puntos": 1
+  }
+]
