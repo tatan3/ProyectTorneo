@@ -4,13 +4,13 @@
     "id_torneo": 1,
     "id_equipo": 1,
     "pj": 1,
-    "pg": 0,
-    "pe": 1,
+    "pg": 1,
+    "pe": 0,
     "pp": 0,
-    "gf": 0,
+    "gf": 1,
     "gc": 0,
-    "dg": 0,
-    "puntos": 1
+    "dg": 1,
+    "puntos": 3
   },
   {
     "id": 1,
@@ -18,11 +18,11 @@
     "id_equipo": 2,
     "pj": 1,
     "pg": 0,
-    "pe": 1,
-    "pp": 0,
+    "pe": 0,
+    "pp": 1,
     "gf": 0,
-    "gc": 0,
-    "dg": 0,
-    "puntos": 1
+    "gc": 1,
+    "dg": -1,
+    "puntos": 0
   }
 ]

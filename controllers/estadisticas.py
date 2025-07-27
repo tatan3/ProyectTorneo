@@ -1,65 +1,100 @@
-import json
 from utils.helpers import limpiar_pantalla, pausar, leer_json
 from utils.validadores import validar_entero
+import json
 
 def mostrar_estadisticas():
-    """Muestra estadísticas de torneos y equipos"""
+    """Muestra la tabla de posiciones de un torneo seleccionado"""
     limpiar_pantalla()
-    print("=== ESTADÍSTICAS ===")
+    print("=== ESTADÍSTICAS DEL TORNEO ===")
     
-    estadisticas = leer_json('data/estadisticas.json')
+    torneos = leer_json('data/torneos.json')
     equipos = leer_json('data/equipos.json')
+    estadisticas = leer_json('data/estadisticas.json')
     
-    if not estadisticas:
-        print("No hay estadísticas registradas.")
+    if not torneos:
+        print("No hay torneos registrados.")
         pausar()
         return
     
-    print("\nEstadísticas disponibles:")
-    for i, estadistica in enumerate(estadisticas, 1):
-        equipo = next((e for e in equipos if e['id'] == estadistica['id_equipo']), None)
-        nombre_equipo = equipo['nombre'] if equipo else "Equipo desconocido"
-        print(f"{i}. {nombre_equipo} - {estadistica['torneo']}")
+    print("\nTorneos disponibles:")
+    for torneo in torneos:
+        print(f"{torneo['id']}. {torneo['nombre']}")
     
-    opcion = validar_entero("\nSeleccione estadística a ver (0 para todas): ")
+    id_torneo = validar_entero("\nSeleccione el ID del torneo: ")
+    torneo_seleccionado = next((t for t in torneos if t['id'] == id_torneo), None)
     
-    if opcion == 0:
-        limpiar_pantalla()
-        print("=== TODAS LAS ESTADÍSTICAS ===")
-        for estadistica in estadisticas:
-            equipo = next((e for e in equipos if e['id'] == estadistica['id_equipo']), None)
-            nombre_equipo = equipo['nombre'] if equipo else "Equipo desconocido"
-            
-            print(f"\nEquipo: {nombre_equipo}")
-            print(f"Torneo: {estadistica['torneo']}")
-            print(f"Partidos jugados: {estadistica['pj']}")
-            print(f"Partidos ganados: {estadistica['pg']}")
-            print(f"Partidos empatados: {estadistica['pe']}")
-            print(f"Partidos perdidos: {estadistica['pp']}")
-            print(f"Goles a favor: {estadistica['gf']}")
-            print(f"Goles en contra: {estadistica['gc']}")
-            print(f"Diferencia de gol: {estadistica['dg']}")
-            print(f"Puntos: {estadistica['puntos']}")
-            print("-" * 40)
-    elif 1 <= opcion <= len(estadisticas):
-        estadistica = estadisticas[opcion - 1]
-        equipo = next((e for e in equipos if e['id'] == estadistica['id_equipo']), None)
-        nombre_equipo = equipo['nombre'] if equipo else "Equipo desconocido"
+    if not torneo_seleccionado:
+        print("ID de torneo no válido.")
+        pausar()
+        return
+    
+    # Filtrar estadísticas solo para este torneo
+    stats_torneo = [s for s in estadisticas if s['id_torneo'] == id_torneo]
+    
+    if not stats_torneo:
+        print("No hay estadísticas registradas para este torneo.")
+        pausar()
+        return
+    
+    # Ordenar por puntos (descendente) y diferencia de goles (descendente)
+    stats_ordenadas = sorted(
+        stats_torneo,
+        key=lambda x: (x['puntos'], x['dg']),
+        reverse=True
+    )
+    
+    # Mostrar tabla de posiciones
+    limpiar_pantalla()
+    print(f"=== TABLA DE POSICIONES - {torneo_seleccionado['nombre'].upper()} ===")
+    print("\nPos.  Equipo                PJ   PG   PE   PP   GF   GC   DG   Pts.")
+    print("-" * 65)
+    
+    for posicion, stat in enumerate(stats_ordenadas, 1):
+        equipo = next((e for e in equipos if e['id'] == stat['id_equipo']), None)
+        nombre_equipo = equipo['nombre'] if equipo else "Desconocido"
         
-        limpiar_pantalla()
-        print(f"=== ESTADÍSTICAS DETALLADAS ===")
-        print(f"Equipo: {nombre_equipo}")
-        print(f"Torneo: {estadistica['torneo']}")
-        print("\nResumen:")
-        print(f"Partidos jugados: {estadistica['pj']}")
-        print(f"Partidos ganados: {estadistica['pg']} ({estadistica['pg']/estadistica['pj']*100:.1f}%)")
-        print(f"Partidos empatados: {estadistica['pe']} ({estadistica['pe']/estadistica['pj']*100:.1f}%)")
-        print(f"Partidos perdidos: {estadistica['pp']} ({estadistica['pp']/estadistica['pj']*100:.1f}%)")
-        print(f"Goles a favor: {estadistica['gf']} ({estadistica['gf']/estadistica['pj']:.1f} por partido)")
-        print(f"Goles en contra: {estadistica['gc']} ({estadistica['gc']/estadistica['pj']:.1f} por partido)")
-        print(f"Diferencia de gol: {estadistica['dg']}")
-        print(f"Puntos: {estadistica['puntos']} ({estadistica['puntos']/(estadistica['pj']*3)*100:.1f}% de puntos posibles)")
-    else:
-        print("Opción no válida.")
+        print(f"{posicion:<5} {nombre_equipo[:20]:<20} "
+              f"{stat['pj']:>3}  {stat['pg']:>3}  {stat['pe']:>3}  {stat['pp']:>3}  "
+              f"{stat['gf']:>3}  {stat['gc']:>3}  {stat['dg']:>3}  {stat['puntos']:>4}")
     
     pausar()
+
+def actualizar_estadisticas(estadisticas, id_torneo, id_equipo, resultado, goles_favor, goles_contra):
+    """Actualiza las estadísticas después de un partido"""
+    # Buscar o crear estadística del equipo en el torneo
+    stat = next(
+        (s for s in estadisticas 
+         if s['id_torneo'] == id_torneo and s['id_equipo'] == id_equipo),
+        None
+    )
+    
+    if not stat:
+        stat = {
+            'id': len(estadisticas) + 1,
+            'id_torneo': id_torneo,
+            'id_equipo': id_equipo,
+            'pj': 0,
+            'pg': 0,
+            'pe': 0,
+            'pp': 0,
+            'gf': 0,
+            'gc': 0,
+            'dg': 0,
+            'puntos': 0
+        }
+        estadisticas.append(stat)
+    
+    # Actualizar valores
+    stat['pj'] += 1
+    stat['gf'] += goles_favor
+    stat['gc'] += goles_contra
+    stat['dg'] = stat['gf'] - stat['gc']
+    
+    if resultado == 'ganado':
+        stat['pg'] += 1
+        stat['puntos'] += 3
+    elif resultado == 'empatado':
+        stat['pe'] += 1
+        stat['puntos'] += 1
+    else:  # perdido
+        stat['pp'] += 1

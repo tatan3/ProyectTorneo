@@ -4,9 +4,9 @@
     "id_torneo": 1,
     "equipo_local": 1,
     "equipo_visitante": 2,
-    "goles_local": 0,
+    "goles_local": 1,
     "goles_visitante": 0,
-    "fecha": "10-02-2020",
+    "fecha": "10/02/2021",
     "estado": "Finalizado"
   }
 ]
