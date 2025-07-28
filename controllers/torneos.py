@@ -10,7 +10,7 @@ def registrar_torneo():
     torneos = leer_json('data/torneos.json')
     
     nuevo_torneo = {
-        'id': len(torneos) + 1,
+        'id': max([t['id'] for t in torneos], default=0) + 1,
         'nombre': validar_texto("Nombre del torneo: "),
         'pais': validar_texto("País sede: "),
         'fecha_inicio': validar_texto("Fecha de inicio (DD/MM/AAAA): "),
@@ -67,9 +67,9 @@ def inscribir_equipos_torneo():
     
     print("\nTorneos disponibles:")
     for torneo in torneos:
-        print(f"{torneo['id']}. {torneo['nombre']} ({torneo['fecha_inicio']} a {torneo['fecha_fin']})")
+        print(f"{torneo['id']}. {torneo['nombre']}")
     
-    id_torneo = validar_entero("\nID del torneo: ")
+    id_torneo = validar_entero("\nSeleccione ID del torneo: ")
     torneo = next((t for t in torneos if t['id'] == id_torneo), None)
     
     if not torneo:
@@ -88,7 +88,7 @@ def inscribir_equipos_torneo():
     for equipo in equipos_no_inscritos:
         print(f"{equipo['id']}. {equipo['nombre']}")
     
-    id_equipo = validar_entero("\nID del equipo a inscribir: ")
+    id_equipo = validar_entero("\nSeleccione ID del equipo a inscribir: ")
     equipo = next((e for e in equipos_no_inscritos if e['id'] == id_equipo), None)
     
     if not equipo:
@@ -97,12 +97,39 @@ def inscribir_equipos_torneo():
         return
     
     # Inscribir equipo en torneo
-    for t in torneos:
-        if t['id'] == id_torneo:
-            t['equipos_inscritos'].append(id_equipo)
-            break
-    
+    torneo['equipos_inscritos'].append(id_equipo)
     escribir_json('data/torneos.json', torneos)
     
     print(f"\nEquipo {equipo['nombre']} inscrito exitosamente en el torneo {torneo['nombre']}!")
+    pausar()
+
+def eliminar_torneo():
+    """Elimina completamente un torneo del sistema"""
+    limpiar_pantalla()
+    print("=== ELIMINAR TORNEO ===")
+    
+    torneos = leer_json('data/torneos.json')
+    
+    if not torneos:
+        print("No hay torneos registrados.")
+        pausar()
+        return
+    
+    print("\nTorneos disponibles:")
+    for torneo in torneos:
+        print(f"{torneo['id']}. {torneo['nombre']}")
+    
+    id_torneo = validar_entero("\nSeleccione ID del torneo a eliminar: ")
+    torneo = next((t for t in torneos if t['id'] == id_torneo), None)
+    
+    if not torneo:
+        print("ID de torneo no válido.")
+        pausar()
+        return
+    
+    # Eliminar torneo
+    torneos = [t for t in torneos if t['id'] != id_torneo]
+    escribir_json('data/torneos.json', torneos)
+    
+    print("\nTorneo eliminado exitosamente!")
     pausar()

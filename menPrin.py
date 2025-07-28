@@ -9,19 +9,33 @@ import json
 from utils.helpers import limpiar_pantalla, pausar
 
 # Importaciones de controladores
-from controllers.equipos import registrar_equipo, listar_equipos
+from controllers.equipos import (
+    registrar_equipo,
+    listar_equipos,
+    eliminar_equipo_en_torneo,
+    eliminar_equipo_no_inscrito,
+    menu_eliminar_equipos
+)
 from controllers.jugadores import (
-    registrar_jugador, 
-    listar_jugadores_por_equipo, 
+    registrar_jugador,
+    listar_jugadores_por_equipo,
     eliminar_jugador
 )
 from controllers.cuerpotecnico import (
-    registrar_cuerpo_tecnico, 
-    listar_cuerpo_tecnico_por_equipo, 
+    registrar_cuerpo_tecnico,
+    listar_cuerpo_tecnico_por_equipo,
     eliminar_cuerpo_tecnico
 )
-from controllers.torneos import registrar_torneo, listar_torneos, inscribir_equipos_torneo
-from controllers.partidos import registrar_partido, listar_partidos
+from controllers.torneos import (
+    registrar_torneo,
+    listar_torneos,
+    inscribir_equipos_torneo,
+    eliminar_torneo
+)
+from controllers.partidos import (
+    registrar_partido,
+    listar_partidos
+)
 from controllers.transferencias import gestionar_transferencia
 from controllers.estadisticas import mostrar_estadisticas
 
@@ -89,6 +103,7 @@ def menu_equipos():
         print("=== GESTIÓN DE EQUIPOS ===")
         print("1. Registrar nuevo equipo")
         print("2. Listar equipos registrados")
+        print("3. Eliminar equipos")
         print("0. Volver al menú principal")
         
         opcion = input("\nSeleccione una opción: ")
@@ -97,6 +112,8 @@ def menu_equipos():
             registrar_equipo()
         elif opcion == "2":
             listar_equipos()
+        elif opcion == "3":
+            menu_eliminar_equipos()
         elif opcion == "0":
             break
         else:
@@ -109,7 +126,7 @@ def menu_jugadores():
         limpiar_pantalla()
         print("=== GESTIÓN DE JUGADORES ===")
         print("1. Registrar nuevo jugador")
-        print("2. Listar jugadores por equipo")
+        print("2. Listar jugadores registrados")
         print("3. Eliminar jugador")
         print("0. Volver al menú principal")
         
@@ -133,7 +150,7 @@ def menu_cuerpo_tecnico():
         limpiar_pantalla()
         print("=== GESTIÓN DE CUERPO TÉCNICO ===")
         print("1. Registrar nuevo miembro")
-        print("2. Listar cuerpo técnico por equipo")
+        print("2. Listar cuerpo técnico")
         print("3. Eliminar miembro")
         print("0. Volver al menú principal")
         
@@ -159,6 +176,7 @@ def menu_torneos():
         print("1. Registrar nuevo torneo")
         print("2. Listar torneos registrados")
         print("3. Inscribir equipos en torneo")
+        print("4. Eliminar torneo")
         print("0. Volver al menú principal")
         
         opcion = input("\nSeleccione una opción: ")
@@ -169,6 +187,8 @@ def menu_torneos():
             listar_torneos()
         elif opcion == "3":
             inscribir_equipos_torneo()
+        elif opcion == "4":
+            eliminar_torneo()
         elif opcion == "0":
             break
         else:
