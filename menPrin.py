@@ -1,3 +1,9 @@
+"""
+Autor: Jhonatan David Pinto Andrade
+Fecha:27/07/2025
+Descripcion: Proyecto Gestor de torneos.
+"""
+
 import os
 import json
 from utils.helpers import limpiar_pantalla, pausar
