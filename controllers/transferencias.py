@@ -1,80 +1,95 @@
 import json
-from datetime import datetime
 from utils.helpers import limpiar_pantalla, pausar, leer_json, escribir_json
-from utils.validadores import validar_texto, validar_entero, validar_flotante
+from utils.validadores import validar_texto, validar_entero
+from datetime import datetime
+
+def seleccionar_torneo():
+    """Permite seleccionar un torneo existente"""
+    torneos = leer_json('data/torneos.json')
+    
+    if not torneos:
+        print("No hay torneos registrados.")
+        pausar()
+        return None
+    
+    print("\nTorneos disponibles:")
+    for torneo in torneos:
+        print(f"{torneo['id']}. {torneo['nombre']}")
+    
+    id_torneo = validar_entero("\nSeleccione ID del torneo: ")
+    return next((t for t in torneos if t['id'] == id_torneo), None)
+
+def seleccionar_equipo(torneo):
+    """Permite seleccionar un equipo del torneo"""
+    equipos = leer_json('data/equipos.json')
+    equipos_torneo = [e for e in equipos if e['id'] in torneo['equipos_inscritos']]
+    
+    if not equipos_torneo:
+        print("Este torneo no tiene equipos inscritos.")
+        pausar()
+        return None
+    
+    print(f"\nEquipos inscritos en {torneo['nombre']}:")
+    for equipo in equipos_torneo:
+        print(f"{equipo['id']}. {equipo['nombre']}")
+    
+    id_equipo = validar_entero("\nSeleccione ID del equipo: ")
+    return next((e for e in equipos_torneo if e['id'] == id_equipo), None)
+
+def seleccionar_jugador(equipo):
+    """Permite seleccionar un jugador del equipo"""
+    jugadores = leer_json('data/jugadores.json')
+    jugadores_equipo = [j for j in jugadores if j['id_equipo'] == equipo['id']]
+    
+    if not jugadores_equipo:
+        print("Este equipo no tiene jugadores registrados.")
+        pausar()
+        return None
+    
+    print(f"\nJugadores de {equipo['nombre']}:")
+    for jugador in jugadores_equipo:
+        print(f"{jugador['id']}. {jugador['nombre']} (Dorsal: {jugador['dorsal']}, Posición: {jugador['posicion']})")
+    
+    id_jugador = validar_entero("\nSeleccione ID del jugador: ")
+    return next((j for j in jugadores_equipo if j['id'] == id_jugador), None)
 
 def gestionar_transferencia():
-    """Gestiona la transferencia (venta o préstamo) de un jugador"""
+    """Gestiona el proceso completo de transferencia"""
     limpiar_pantalla()
     print("=== GESTIÓN DE TRANSFERENCIAS ===")
     
-    jugadores = leer_json('data/jugadores.json')
-    equipos = leer_json('data/equipos.json')
-    transferencias = leer_json('data/transferencias.json')
-    
-    if not jugadores or len(jugadores) == 0:
-        print("No hay jugadores registrados.")
-        pausar()
+    # Paso 1: Seleccionar torneo
+    torneo = seleccionar_torneo()
+    if not torneo:
         return
     
-    if len(equipos) < 2:
-        print("Se necesitan al menos 2 equipos registrados para realizar transferencias.")
-        pausar()
+    # Paso 2: Seleccionar equipo origen
+    print("\nSeleccione equipo ORIGEN:")
+    equipo_origen = seleccionar_equipo(torneo)
+    if not equipo_origen:
         return
     
-    # Mostrar jugadores disponibles para transferencia
-    print("\nJugadores disponibles para transferencia:")
-    jugadores_activos = [j for j in jugadores if j['estado'] == 'Activo']
-    
-    if not jugadores_activos:
-        print("No hay jugadores activos disponibles para transferencia.")
-        pausar()
-        return
-    
-    for jugador in jugadores_activos:
-        equipo_actual = next((e for e in equipos if e['id'] == jugador['equipo_actual']), None)
-        equipo_nombre = equipo_actual['nombre'] if equipo_actual else "Desconocido"
-        print(f"{jugador['id']}. {jugador['nombre']} {jugador['apellido']} ({jugador['posicion']}) - {equipo_nombre}")
-    
-    id_jugador = validar_entero("\nID del jugador a transferir: ")
-    jugador = next((j for j in jugadores if j['id'] == id_jugador), None)
-    
+    # Paso 3: Seleccionar jugador
+    jugador = seleccionar_jugador(equipo_origen)
     if not jugador:
-        print("ID de jugador no válido.")
-        pausar()
         return
     
-    if jugador['estado'] != 'Activo':
-        print("Este jugador no está activo para transferencia.")
-        pausar()
-        return
-    
-    # Mostrar equipos destino (excluyendo el actual)
-    equipo_origen = next((e for e in equipos if e['id'] == jugador['equipo_actual']), None)
-    
-    print("\nEquipos destino disponibles:")
-    for equipo in equipos:
-        if equipo['id'] != jugador['equipo_actual']:
-            print(f"{equipo['id']}. {equipo['nombre']} ({equipo['pais']})")
-    
-    id_equipo_destino = validar_entero("\nID del equipo destino: ")
-    equipo_destino = next((e for e in equipos if e['id'] == id_equipo_destino), None)
-    
+    # Paso 4: Seleccionar equipo destino
+    print("\nSeleccione equipo DESTINO:")
+    equipo_destino = seleccionar_equipo(torneo)
     if not equipo_destino:
-        print("ID de equipo no válido.")
+        return
+    
+    if equipo_origen['id'] == equipo_destino['id']:
+        print("No puede transferir a un jugador al mismo equipo.")
         pausar()
         return
     
-    if id_equipo_destino == jugador['equipo_actual']:
-        print("El jugador ya pertenece a este equipo.")
-        pausar()
-        return
-    
-    # Tipo de transferencia
+    # Paso 5: Seleccionar tipo de transferencia
     print("\nTipos de transferencia:")
     print("1. Venta")
     print("2. Préstamo")
-    tipo_transferencia = validar_entero("Seleccione el tipo (1-2): ")
+    tipo_transferencia = validar_entero("Seleccione tipo (1-2): ")
     
     if tipo_transferencia not in [1, 2]:
         print("Opción no válida.")
@@ -86,15 +101,17 @@ def gestionar_transferencia():
     fecha_fin = None
     
     if tipo == "Venta":
-        monto = validar_flotante("Monto de la transferencia (en millones): ")
+        monto = validar_entero("Monto de la transferencia: ")
     else:
         fecha_fin = validar_texto("Fecha de fin de préstamo (DD/MM/AAAA): ")
     
     # Registrar la transferencia
+    transferencias = leer_json('data/transferencias.json')
+    
     nueva_transferencia = {
         'id': len(transferencias) + 1,
-        'id_jugador': id_jugador,
-        'nombre_jugador': f"{jugador['nombre']} {jugador['apellido']}",
+        'id_jugador': jugador['id'],
+        'nombre_jugador': jugador['nombre'],
         'equipo_origen': equipo_origen['id'],
         'nombre_equipo_origen': equipo_origen['nombre'],
         'equipo_destino': equipo_destino['id'],
@@ -108,23 +125,25 @@ def gestionar_transferencia():
     transferencias.append(nueva_transferencia)
     escribir_json('data/transferencias.json', transferencias)
     
-    # Actualizar estado del jugador
+    # Actualizar jugador (mover a nuevo equipo)
+    jugadores = leer_json('data/jugadores.json')
     for j in jugadores:
-        if j['id'] == id_jugador:
-            j['equipo_actual'] = id_equipo_destino
-            if tipo == "Préstamo":
-                j['estado'] = "Préstamo"
+        if j['id'] == jugador['id']:
+            j['id_equipo'] = equipo_destino['id']
             break
     
-    # Actualizar listas de jugadores en equipos
-    for equipo in equipos:
-        if equipo['id'] == equipo_origen['id']:
-            equipo['jugadores'].remove(id_jugador)
-        elif equipo['id'] == equipo_destino['id']:
-            equipo['jugadores'].append(id_jugador)
-    
     escribir_json('data/jugadores.json', jugadores)
+    
+    # Actualizar equipos
+    equipos = leer_json('data/equipos.json')
+    for e in equipos:
+        if e['id'] == equipo_origen['id'] and jugador['id'] in e['jugadores']:
+            e['jugadores'].remove(jugador['id'])
+        elif e['id'] == equipo_destino['id']:
+            e['jugadores'].append(jugador['id'])
+    
     escribir_json('data/equipos.json', equipos)
     
-    print(f"\nTransferencia de {jugador['nombre']} {jugador['apellido']} registrada exitosamente!")
+    print(f"\nTransferencia de {jugador['nombre']} registrada exitosamente!")
+    print(f"De {equipo_origen['nombre']} a {equipo_destino['nombre']} ({tipo})")
     pausar()

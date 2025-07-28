@@ -1,76 +1,109 @@
+import json
 from utils.helpers import limpiar_pantalla, pausar, leer_json, escribir_json
 from utils.validadores import validar_texto, validar_entero
-import json
 
-def registrar_cuerpo_tecnico():
-    """Registra un nuevo miembro del cuerpo técnico"""
-    limpiar_pantalla()
-    print("=== REGISTRAR CUERPO TÉCNICO ===")
-    
-    cuerpos_tecnicos = leer_json('data/cuerpotecnico.json')
+def obtener_equipo():
+    """Muestra lista de equipos y retorna el seleccionado"""
     equipos = leer_json('data/equipos.json')
     
     if not equipos:
-        print("No hay equipos registrados. Registre un equipo primero.")
+        print("No hay equipos registrados.")
         pausar()
-        return
+        return None
     
     print("\nEquipos disponibles:")
     for equipo in equipos:
         print(f"{equipo['id']}. {equipo['nombre']}")
     
-    id_equipo = validar_entero("\nID del equipo: ")
-    equipo = next((e for e in equipos if e['id'] == id_equipo), None)
+    id_equipo = validar_entero("\nSeleccione ID del equipo: ")
+    return next((e for e in equipos if e['id'] == id_equipo), None)
+
+def registrar_cuerpo_tecnico():
+    """Registra nuevo miembro en un equipo específico"""
+    limpiar_pantalla()
+    print("=== REGISTRAR CUERPO TÉCNICO ===")
     
+    equipo = obtener_equipo()
     if not equipo:
-        print("ID de equipo no válido.")
+        return
+    
+    cuerpo_tecnico = leer_json('data/cuerpotecnico.json')
+    
+    nuevo_miembro = {
+        'id': max([c['id'] for c in cuerpo_tecnico], default=0) + 1,
+        'nombre': validar_texto("Nombre completo: "),
+        'cargo': validar_texto("Cargo (Entrenador/Asistente/Preparador/Médico): "),
+        'id_equipo': equipo['id']
+    }
+    
+    cuerpo_tecnico.append(nuevo_miembro)
+    escribir_json('data/cuerpotecnico.json', cuerpo_tecnico)
+    
+    # Actualizar equipo
+    equipos = leer_json('data/equipos.json')
+    for eq in equipos:
+        if eq['id'] == equipo['id']:
+            eq['cuerpo_tecnico'].append(nuevo_miembro['id'])
+    
+    escribir_json('data/equipos.json', equipos)
+    print(f"\n{nuevo_miembro['cargo']} {nuevo_miembro['nombre']} registrado exitosamente!")
+    pausar()
+
+def listar_cuerpo_tecnico_por_equipo():
+    """Lista cuerpo técnico de un equipo específico"""
+    limpiar_pantalla()
+    print("=== LISTAR CUERPO TÉCNICO POR EQUIPO ===")
+    
+    equipo = obtener_equipo()
+    if not equipo:
+        return
+    
+    cuerpo_tecnico = leer_json('data/cuerpotecnico.json')
+    tecnicos_equipo = [t for t in cuerpo_tecnico if t['id_equipo'] == equipo['id']]
+    
+    limpiar_pantalla()
+    print(f"=== CUERPO TÉCNICO DE {equipo['nombre'].upper()} ===")
+    print("\nID  Cargo                Nombre")
+    print("-" * 50)
+    
+    for tecnico in sorted(tecnicos_equipo, key=lambda x: x['cargo']):
+        print(f"{tecnico['id']:<3} {tecnico['cargo']:<20} {tecnico['nombre']}")
+    
+    pausar()
+
+def eliminar_cuerpo_tecnico():
+    """Elimina completamente un miembro del cuerpo técnico"""
+    limpiar_pantalla()
+    print("=== ELIMINAR CUERPO TÉCNICO ===")
+    
+    equipo = obtener_equipo()
+    if not equipo:
+        return
+    
+    cuerpo_tecnico = leer_json('data/cuerpotecnico.json')
+    tecnicos_equipo = [t for t in cuerpo_tecnico if t['id_equipo'] == equipo['id']]
+    
+    if not tecnicos_equipo:
+        print("Este equipo no tiene cuerpo técnico registrado.")
         pausar()
         return
     
-    nuevo_miembro = {
-        'id': len(cuerpos_tecnicos) + 1,
-        'nombre': validar_texto("Nombre: "),
-        'apellido': validar_texto("Apellido: "),
-        'rol': validar_texto("Rol (Entrenador/Asistente/Preparador físico/Médico): "),
-        'nacionalidad': validar_texto("Nacionalidad: "),
-        'fecha_nacimiento': validar_texto("Fecha de nacimiento (DD/MM/AAAA): "),
-        'id_equipo': id_equipo
-    }
+    print(f"\nCuerpo técnico de {equipo['nombre']}:")
+    for tecnico in tecnicos_equipo:
+        print(f"{tecnico['id']}. {tecnico['nombre']} ({tecnico['cargo']})")
     
-    cuerpos_tecnicos.append(nuevo_miembro)
-    escribir_json('data/cuerpotecnico.json', cuerpos_tecnicos)
+    id_miembro = validar_entero("\nIngrese ID del miembro a eliminar: ")
     
-    # Agregar al equipo
+    # Eliminar miembro
+    cuerpo_tecnico = [t for t in cuerpo_tecnico if t['id'] != id_miembro]
+    escribir_json('data/cuerpotecnico.json', cuerpo_tecnico)
+    
+    # Actualizar equipo
+    equipos = leer_json('data/equipos.json')
     for eq in equipos:
-        if eq['id'] == id_equipo:
-            eq['cuerpo_tecnico'].append(nuevo_miembro['id'])
-            break
+        if eq['id'] == equipo['id'] and id_miembro in eq['cuerpo_tecnico']:
+            eq['cuerpo_tecnico'].remove(id_miembro)
     
     escribir_json('data/equipos.json', equipos)
-    
-    print(f"\n{nuevo_miembro['rol']} {nuevo_miembro['nombre']} {nuevo_miembro['apellido']} registrado exitosamente!")
-    pausar()
-
-def listar_cuerpo_tecnico():
-    """Muestra todos los miembros del cuerpo técnico"""
-    limpiar_pantalla()
-    print("=== LISTADO DE CUERPO TÉCNICO ===")
-    
-    cuerpos_tecnicos = leer_json('data/cuerpotecnico.json')
-    equipos = leer_json('data/equipos.json')
-    
-    if not cuerpos_tecnicos:
-        print("No hay miembros del cuerpo técnico registrados.")
-    else:
-        for miembro in cuerpos_tecnicos:
-            equipo = next((e for e in equipos if e['id'] == miembro['id_equipo']), None)
-            nombre_equipo = equipo['nombre'] if equipo else "Sin equipo"
-            
-            print(f"\nID: {miembro['id']}")
-            print(f"Nombre: {miembro['nombre']} {miembro['apellido']}")
-            print(f"Rol: {miembro['rol']}")
-            print(f"Equipo: {nombre_equipo}")
-            print(f"Nacionalidad: {miembro['nacionalidad']}")
-            print("-" * 30)
-    
+    print("\nMiembro eliminado exitosamente!")
     pausar()

@@ -4,8 +4,16 @@ from utils.helpers import limpiar_pantalla, pausar
 
 # Importaciones de controladores
 from controllers.equipos import registrar_equipo, listar_equipos
-from controllers.jugadores import registrar_jugador, listar_jugadores
-from controllers.cuerpotecnico import registrar_cuerpo_tecnico, listar_cuerpo_tecnico
+from controllers.jugadores import (
+    registrar_jugador, 
+    listar_jugadores_por_equipo, 
+    eliminar_jugador
+)
+from controllers.cuerpotecnico import (
+    registrar_cuerpo_tecnico, 
+    listar_cuerpo_tecnico_por_equipo, 
+    eliminar_cuerpo_tecnico
+)
 from controllers.torneos import registrar_torneo, listar_torneos, inscribir_equipos_torneo
 from controllers.partidos import registrar_partido, listar_partidos
 from controllers.transferencias import gestionar_transferencia
@@ -95,7 +103,8 @@ def menu_jugadores():
         limpiar_pantalla()
         print("=== GESTIÓN DE JUGADORES ===")
         print("1. Registrar nuevo jugador")
-        print("2. Listar jugadores registrados")
+        print("2. Listar jugadores por equipo")
+        print("3. Eliminar jugador")
         print("0. Volver al menú principal")
         
         opcion = input("\nSeleccione una opción: ")
@@ -103,7 +112,9 @@ def menu_jugadores():
         if opcion == "1":
             registrar_jugador()
         elif opcion == "2":
-            listar_jugadores()
+            listar_jugadores_por_equipo()
+        elif opcion == "3":
+            eliminar_jugador()
         elif opcion == "0":
             break
         else:
@@ -116,7 +127,8 @@ def menu_cuerpo_tecnico():
         limpiar_pantalla()
         print("=== GESTIÓN DE CUERPO TÉCNICO ===")
         print("1. Registrar nuevo miembro")
-        print("2. Listar cuerpo técnico")
+        print("2. Listar cuerpo técnico por equipo")
+        print("3. Eliminar miembro")
         print("0. Volver al menú principal")
         
         opcion = input("\nSeleccione una opción: ")
@@ -124,7 +136,9 @@ def menu_cuerpo_tecnico():
         if opcion == "1":
             registrar_cuerpo_tecnico()
         elif opcion == "2":
-            listar_cuerpo_tecnico()
+            listar_cuerpo_tecnico_por_equipo()
+        elif opcion == "3":
+            eliminar_cuerpo_tecnico()
         elif opcion == "0":
             break
         else:

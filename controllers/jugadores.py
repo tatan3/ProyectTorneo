@@ -1,87 +1,107 @@
-import json
 from utils.helpers import limpiar_pantalla, pausar, leer_json, escribir_json
-from utils.validadores import validar_texto, validar_entero, validar_flotante
+import json
+from utils.validadores import validar_texto, validar_entero
 
-def registrar_jugador():
-    """Registra un nuevo jugador en el sistema"""
-    limpiar_pantalla()
-    print("=== REGISTRAR NUEVO JUGADOR ===")
-    
-    jugadores = leer_json('data/jugadores.json')
+def obtener_equipo():
+    """Muestra lista de equipos y retorna el seleccionado"""
     equipos = leer_json('data/equipos.json')
     
     if not equipos:
-        print("Error: No hay equipos registrados. Registre un equipo primero.")
+        print("No hay equipos registrados.")
         pausar()
-        return
-    
-    nuevo_jugador = {
-        'id': len(jugadores) + 1,
-        'nombre': validar_texto("Nombre del jugador: "),
-        'apellido': validar_texto("Apellido del jugador: "),
-        'fecha_nacimiento': validar_texto("Fecha de nacimiento (DD/MM/AAAA): "),
-        'nacionalidad': validar_texto("Nacionalidad: "),
-        'posicion': validar_texto("Posición (Delantero/Mediocampista/Defensa/Arquero): "),
-        'numero_camiseta': validar_entero("Número de camiseta: "),
-        'equipo_actual': None,
-        'valor_mercado': validar_flotante("Valor de mercado (en millones): "),
-        'estado': 'Libre'
-    }
+        return None
     
     print("\nEquipos disponibles:")
     for equipo in equipos:
-        print(f"{equipo['id']}. {equipo['nombre']} ({equipo['pais']})")
+        print(f"{equipo['id']}. {equipo['nombre']}")
     
-    opcion = input("\n¿Desea asignar el jugador a un equipo? (s/n): ").lower()
-    if opcion == 's':
-        id_equipo = validar_entero("ID del equipo: ")
-        equipo_encontrado = next((e for e in equipos if e['id'] == id_equipo), None)
-        
-        if equipo_encontrado:
-            nuevo_jugador['equipo_actual'] = id_equipo
-            nuevo_jugador['estado'] = 'Activo'
-            
-            # Agregar jugador al equipo
-            for equipo in equipos:
-                if equipo['id'] == id_equipo:
-                    equipo['jugadores'].append(nuevo_jugador['id'])
-                    break
-            
-            escribir_json('data/equipos.json', equipos)
-            print(f"Jugador asignado al equipo {equipo_encontrado['nombre']}")
-        else:
-            print("ID de equipo no válido. Jugador registrado como libre.")
+    id_equipo = validar_entero("\nSeleccione ID del equipo: ")
+    return next((e for e in equipos if e['id'] == id_equipo), None)
+
+def registrar_jugador():
+    """Registra un nuevo jugador en un equipo específico"""
+    limpiar_pantalla()
+    print("=== REGISTRAR NUEVO JUGADOR ===")
+    
+    equipo = obtener_equipo()
+    if not equipo:
+        return
+    
+    jugadores = leer_json('data/jugadores.json')
+    
+    nuevo_jugador = {
+        'id': max([j['id'] for j in jugadores], default=0) + 1,
+        'nombre': validar_texto("Nombre completo del jugador: "),
+        'dorsal': validar_entero("Número de dorsal: "),
+        'posicion': validar_texto("Posición (Delantero/Mediocampista/Defensa/Arquero): "),
+        'id_equipo': equipo['id']
+    }
     
     jugadores.append(nuevo_jugador)
     escribir_json('data/jugadores.json', jugadores)
     
-    print(f"\nJugador {nuevo_jugador['nombre']} {nuevo_jugador['apellido']} registrado exitosamente!")
+    # Actualizar lista de jugadores en el equipo
+    equipo['jugadores'].append(nuevo_jugador['id'])
+    escribir_json('data/equipos.json', leer_json('data/equipos.json'))
+    
+    print(f"\nJugador {nuevo_jugador['nombre']} registrado exitosamente en {equipo['nombre']}!")
     pausar()
 
-def listar_jugadores():
-    """Muestra todos los jugadores registrados"""
+def listar_jugadores_por_equipo():
+    """Lista jugadores de un equipo específico"""
     limpiar_pantalla()
-    print("=== LISTADO DE JUGADORES ===")
+    print("=== LISTAR JUGADORES POR EQUIPO ===")
+    
+    equipo = obtener_equipo()
+    if not equipo:
+        return
     
     jugadores = leer_json('data/jugadores.json')
+    jugadores_equipo = [j for j in jugadores if j['id_equipo'] == equipo['id']]
+    
+    limpiar_pantalla()
+    print(f"=== JUGADORES DE {equipo['nombre'].upper()} ===")
+    print("\nID  Dorsal  Nombre                Posición")
+    print("-" * 50)
+    
+    for jugador in sorted(jugadores_equipo, key=lambda x: x['dorsal']):
+        print(f"{jugador['id']:<3} {jugador['dorsal']:<7} {jugador['nombre']:<20} {jugador['posicion']}")
+    
+    pausar()
+
+def eliminar_jugador():
+    """Elimina completamente un jugador de un equipo"""
+    limpiar_pantalla()
+    print("=== ELIMINAR JUGADOR ===")
+    
+    equipo = obtener_equipo()
+    if not equipo:
+        return
+    
+    jugadores = leer_json('data/jugadores.json')
+    jugadores_equipo = [j for j in jugadores if j['id_equipo'] == equipo['id']]
+    
+    if not jugadores_equipo:
+        print("Este equipo no tiene jugadores registrados.")
+        pausar()
+        return
+    
+    print(f"\nJugadores de {equipo['nombre']}:")
+    for jugador in jugadores_equipo:
+        print(f"{jugador['id']}. {jugador['nombre']} (Dorsal: {jugador['dorsal']})")
+    
+    id_jugador = validar_entero("\nIngrese ID del jugador a eliminar: ")
+    
+    # Eliminar jugador
+    jugadores = [j for j in jugadores if j['id'] != id_jugador]
+    escribir_json('data/jugadores.json', jugadores)
+    
+    # Actualizar equipo
     equipos = leer_json('data/equipos.json')
+    for eq in equipos:
+        if eq['id'] == equipo['id'] and id_jugador in eq['jugadores']:
+            eq['jugadores'].remove(id_jugador)
     
-    if not jugadores:
-        print("No hay jugadores registrados.")
-    else:
-        for jugador in jugadores:
-            equipo_nombre = "Libre"
-            if jugador['equipo_actual']:
-                equipo = next((e for e in equipos if e['id'] == jugador['equipo_actual']), None)
-                if equipo:
-                    equipo_nombre = equipo['nombre']
-            
-            print(f"\nID: {jugador['id']}")
-            print(f"Nombre: {jugador['nombre']} {jugador['apellido']}")
-            print(f"Posición: {jugador['posicion']}")
-            print(f"Equipo: {equipo_nombre}")
-            print(f"Valor: ${jugador['valor_mercado']} millones")
-            print(f"Estado: {jugador['estado']}")
-            print("-" * 30)
-    
+    escribir_json('data/equipos.json', equipos)
+    print("\nJugador eliminado exitosamente!")
     pausar()
